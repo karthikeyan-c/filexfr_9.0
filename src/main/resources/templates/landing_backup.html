@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> End to End Encryption </title>
+</head>
+<body>
+<!--<form action="/download/imagek2122.png" method="post">-->
+<!--<form th:action="@{/download/imagek2122.png}" method="post">-->
+<form th:action="@{/request/__(${reqUUID})__}" method="post">
+    <label for="otp">OTP:</label>
+    <meta id="reqUUID" name="reqUUID" th:content="${reqUUID}"/>
+    <input type="text" id="otp" name="otp" onchange="javascript:generateKeyPair();"><br><br><br><br>
+    <input type="text" id="reqId" name="reqId"><br><br><br><br>
+    <input type="hidden" id="publicKey" name="publicKey">
+    <input type="submit" value="validate OTP">
+    <div>
+        <a id="aEncsavefile" hidden=""><button>Save Encrypted File</button></a>
+    </div>
+</form>
+
+<script type="text/javascript">
+     async function generateKeyPair() {
+        const keys = await crypto.subtle.generateKey(
+          {
+            name: 'RSA-OAEP',
+            modulusLength: 2048,
+            publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+            hash: { name: 'SHA-256' },
+          },
+          true,
+          ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'],
+        );
+
+        // export private key to JWK and store in local store
+        var jwk = await crypto.subtle.exportKey("jwk", keys.privateKey);
+        localStorage.setItem("privateKey",JSON.stringify(jwk));
+        console.log(localStorage.getItem("privateKey"));
+
+         // export private key to JWK and send to server.
+        jwk = await crypto.subtle.exportKey("jwk", keys.publicKey);
+        document.getElementById("publicKey").value = JSON.stringify(jwk);
+        document.getElementById("reqId").value = document.querySelector('meta[name="reqUUID"]').content;
+        console.log(document.getElementById("publicKey").value);
+    }
+
+    async function decryptkey1() {
+        const algo = {
+                name: 'RSA-OAEP',
+                hash: { name: 'SHA-256' }
+        };
+
+        const pubkey = {"kty":"RSA","n":"yq4DZgq55SALyzEXOLWR4uZKLou2tBRT4gS9_Mu2z_ymqG5Ur5z18FkS3h-i76vbu5EoTv_cXSi_53-F3Y6b9fc-zYLmfoXBK4pcRYkGm3SMdLhQQScvWhG75VqGhq6aKX8AO8wf-0OWJiVqO-9FDXnO9GmBKEsqqOnLdwq_FvAj2X682JtFDSLtMEH0r-fevv686a_y4tqzWn3tfZdUqB5F9tz3FOm6EQ4P-LVvBVFKAVoTmW6KqNEZ-LIYPWo_PhmghT1KwFk6cdkoHrGbvMR9iy_k_ydR8MNQgtIY2RZtneUSN_JJT016QL2YdIn-Cgq1zBNXX-lKma7izAragQ","e":"AQAB"};
+        console.log("after key");
+        var publickey = await window.crypto.subtle.importKey('jwk', pubkey, algo, false, ['encrypt']);
+        var kekbytes = new TextEncoder("utf-8").encode("kk");
+        var buffer =  await crypto.subtle.encrypt({name: 'RSA-OAEP'}, publickey, kekbytes);
+        console.log("completed1");
+
+        const key = {"kty":"RSA","n":"yq4DZgq55SALyzEXOLWR4uZKLou2tBRT4gS9_Mu2z_ymqG5Ur5z18FkS3h-i76vbu5EoTv_cXSi_53-F3Y6b9fc-zYLmfoXBK4pcRYkGm3SMdLhQQScvWhG75VqGhq6aKX8AO8wf-0OWJiVqO-9FDXnO9GmBKEsqqOnLdwq_FvAj2X682JtFDSLtMEH0r-fevv686a_y4tqzWn3tfZdUqB5F9tz3FOm6EQ4P-LVvBVFKAVoTmW6KqNEZ-LIYPWo_PhmghT1KwFk6cdkoHrGbvMR9iy_k_ydR8MNQgtIY2RZtneUSN_JJT016QL2YdIn-Cgq1zBNXX-lKma7izAragQ","e":"AQAB","d":"fL49OUDAyVS_7X95W13lPFGgtqUm_g7E0gc5J636Bmjp6iB93tgsRpGMG0o9bmXIB9l_hZ_UcUHzWvgR3Bs5wlk6PiKi2pxYGARAZku_1U4WZIBMZM1JR5ZCnxboVVyBZajU6_jmdi9S6od8qwbI6VJfHe8Rn0skJnI-2DW1BtgNqz3CyoRg51nf_qk0twHrkY2VhAmrMnW4vgaD7sT73so7NASMr37F8KyNU-BOqVeGpd7Nr1L2RMTaN_wdwqqjPf4VDd8FqHb8iph0sGrhcVSjkYdBF_OZCm3mjxFu1Ur92MvWk_7AlkKKgl_3ZqozNnoCtlf8n0HM8kWO8abWQQ","p":"65EWWi2mJc-zcszObl5G4d4yu_T8rVwi0V_KsD6NZEyJLVsgyGT66roTRQBllGD98aqb3egNYacFC1qfk1TCVWAxiq_n4IY9s4Sllx7Qv09dyhwAxrAm4l3mDLH5bB6Ta_ndObcQbSnDe9tU9Xay9i-hF8cNPEDMxDBJTgCYx08","q":"3EKmCXT9lFnM2s3QazRXWZGIOh3U_XPTILYpH3WdUU-ppZETACctiA6pkWPdfvw521nbOsg5N3qrQ4sk9tou1P6ypvg9bW3Q9bRNqyRwIc7ZAwINy1mIZqZrOKo1MoZbFBkniEhJaKfn0Xssw3HL5jygSvOxZZxuMWQZt8hczS8","dp":"rSVwo4oIJKS9BrWpShB700tKSUMyco5VfUYGqnLf5IgpEDB6MTGgCOYKgd5fy6dbIMXBWWNWap-kIotS3a0gRja1U3YmXq7tLUVjnWdmEihZDNR2cZRKkHpqPIyYg7MZsvTueZyoM0TOTfySPvYnZrLtmpeRj-clW1MOnonrwhs","dq":"WWAOAa5gKy9ZKbv0A1xEyYp9LZ_nSkUSeaaQ_zv5bwIVQ6KfhCNhnWDdu6o7OYjdbT2D8NFILlPvZMP0ZtpXwIPtOEVon5u8-8aC8ZwiiAVoF4lg0Y_uAkErJt4iIfNUx84BNZKnfvkK3vzNSC1H4I_fNyq1ZBbau93zdZiu128","qi":"Sx9rz_WkQFB-OKPlvs-amiIzDdUVpVV1HTGjdqWquwkCXUiR1Xxn6l9gQuvB9Z3-W33TvIxvja_wINqnsUTF1NkgdwzMgQiY9Nu1rzcmWmaA08_NqQyddzDBMSFWzNudDUIyWhCxMDOUnIr_MY-w8aEkwxBl195e89kQ0vDgYAs"};
+        var privatekey = await window.crypto.subtle.importKey('jwk', key, algo, false, ['decrypt']);
+        console.log("1");
+        //kekbytes = new Uint8Array(kekbytes);
+        console.log("2");
+        var buffer =  await crypto.subtle.decrypt({name: 'RSA-OAEP'}, privatekey, buffer);
+        console.log("after key decrypt " + buffer);
+        console.log("completed2" + buffer);
+    }
+    async function decryptKey(aeskey) {
+        console.log("inside decryptKey");
+
+        const keys = await crypto.subtle.generateKey(
+          {
+            name: 'RSA-OAEP',
+            modulusLength: 2048,
+            publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+            hash: { name: 'SHA-256' },
+          },
+          true,
+          ['encrypt', 'decrypt', 'wrapKey', 'unwrapKey'],
+        );
+
+        // export private key to JWK
+        var jwk = await crypto.subtle.exportKey("jwk", keys.privateKey);
+        console.log("jwk is" + jwk.kty + jwk.e + jwk.n);
+        console.log("private stringify" + JSON.stringify(jwk));
+        jwk = await crypto.subtle.exportKey("jwk", keys.publicKey);
+        console.log("jwk is" + jwk.kty + jwk.e + jwk.n);
+        console.log("public stringify" + JSON.stringify(jwk));
+
+        //cipherbytes=;
+		cipherbytes=new Uint8Array(cipherbytes);
+        console.log("cipherbytes length is " + cipherbytes.length);
+
+        const algo = {
+            name: 'RSA-OAEP',
+            hash: { name: 'SHA-256' }
+        };
+        //const key = {"kty":"RSA","e":"AQAB","n":"tdzSd8-bzNqLOAPAMfDBYV2Bf_h7MzL52FnVEBA4M_MOW9oXLB4CFX7P2uDMRzZOff60_x4cJX3I65H6tEQoPKUuhRChLbt1ZkCGnotgpVeC-NlAhuQAk7ovhyVnTwn5UGNyThoWul8Vdo0nIhu37DZrUrjCTYOGsIHERTbmjCGjlusaiIn_M0pTsXX-YcKR7OUrArJfZMhkc8G_Duk22YfifFFj81L2ccSkJu1Ll-C0xxWkgRdm-TXfOqGeDCqr-TlSofLYaD9FQQsGRUWpKcPjqVM6ffA-nEzEs1RANRFNRajAe9Z39RUzM9Yj_lS22rNuK0MBeqAH7YPXeSCoTw"};
+        //console.log("after key");
+        //const privatekey = await window.crypto.subtle.importKey('jwk', key, algo, false, ['decrypt']);
+        const privatekey = await window.crypto.subtle.importKey('raw', cipherbytes, algo, false, ['decrypt']);
+        console.log("after key import " + privatekey);
+        console.log("aeskey is " + aeskey);
+        aeskey = new Uint8Array(aeskey);
+        console.log("aeskey is " + aeskey);
+        var buffer =  await crypto.subtle.decrypt({name: 'RSA-OAEP'}, privatekey,aeskey);
+        console.log("after key decrypt " + buffer);
+        return buffer;
+	}
+
+    async function encryptFile1() {
+            const algo = {
+                name: 'RSA-OAEP',
+                hash: { name: 'SHA-256' }
+            };
+
+            //const key = {"kty":"RSA","e":"AQAB","n":"6ev8UMBRVdgWXaYeUFCi7hm-_kYgq8BKqkoHF5w4PedVXHv7J38YCD2ziNXzSAZ7Q2BkELZzHzRdfnrG1FDhXEzELZtJXkEg65UJa_FGrRj4pBwhKAXrfR6oTjxXyn3abgGtn00oC8_mXHgti-ufIXraVoBiRQym1qQbAF9Ek-bmGn5AY_ZmCGTC77ICppU_ehFmyfK5khu9TYCro9BZfbBOwZFt1sUP_Q8e4PQciTIhbe_v_WrbMg1c0qRHjQAW-z2H89SVSA9QASLUnkVuhReHBVcpuWXHQUW7axBNN5v8GfV-zuLfCO6ouBHWXB3fivxYTxAoyLotSWMJXmv68Q"};
+            const key = {"kty":"RSA","e":"AQAB","n":"tdzSd8-bzNqLOAPAMfDBYV2Bf_h7MzL52FnVEBA4M_MOW9oXLB4CFX7P2uDMRzZOff60_x4cJX3I65H6tEQoPKUuhRChLbt1ZkCGnotgpVeC-NlAhuQAk7ovhyVnTwn5UGNyThoWul8Vdo0nIhu37DZrUrjCTYOGsIHERTbmjCGjlusaiIn_M0pTsXX-YcKR7OUrArJfZMhkc8G_Duk22YfifFFj81L2ccSkJu1Ll-C0xxWkgRdm-TXfOqGeDCqr-TlSofLYaD9FQQsGRUWpKcPjqVM6ffA-nEzEs1RANRFNRajAe9Z39RUzM9Yj_lS22rNuK0MBeqAH7YPXeSCoTw"};
+            const publicKey = await window.crypto.subtle.importKey('jwk', key, algo, false, ['encrypt']);
+            var buffer =  await crypto.subtle.encrypt({name: 'RSA-OAEP'}, publicKey,
+                                      new TextEncoder().encode('asdf'));
+            buffer = new Uint8Array(buffer);
+            console.log("encrypted value: " + buffer.byteLength);
+            //decrypt
+<!--            const pkey = {"kty":"RSA","e":"AQAB","n":"6ev8UMBRVdgWXaYeUFCi7hm-_kYgq8BKqkoHF5w4PedVXHv7J38YCD2ziNXzSAZ7Q2BkELZzHzRdfnrG1FDhXEzELZtJXkEg65UJa_FGrRj4pBwhKAXrfR6oTjxXyn3abgGtn00oC8_mXHgti-ufIXraVoBiRQym1qQbAF9Ek-bmGn5AY_ZmCGTC77ICppU_ehFmyfK5khu9TYCro9BZfbBOwZFt1sUP_Q8e4PQciTIhbe_v_WrbMg1c0qRHjQAW-z2H89SVSA9QASLUnkVuhReHBVcpuWXHQUW7axBNN5v8GfV-zuLfCO6ouBHWXB3fivxYTxAoyLotSWMJXmv68Q"};-->
+<!--            const privateKey = await window.crypto.subtle.importKey('jwk', pkey, algo, false, ['decrypt']);-->
+<!--            window.crypto.subtle.decrypt(-->
+<!--                {-->
+<!--                  name: "RSA-OAEP"-->
+<!--                },-->
+<!--                privateKey,-->
+<!--                buffer-->
+<!--            );-->
+
+            var blob=new Blob([buffer], {type: 'application/download'});
+            var blobUrl=URL.createObjectURL(blob);
+            aEncsavefile.href=blobUrl;
+            aEncsavefile.download='b.enc';
+            //aEncsavefile.click();
+       }
+
+       async function encryptFile() {
+            const algo = {
+                name: 'RSA-OAEP',
+                hash: { name: 'SHA-256' }
+            };
+
+            console.log("inside");
+            /*const key = {"kty":"RSA",
+                        "e":"AQAB",
+                        "n":"t9PUjRszWuICkPKLhGiLMtVaLD7TOWIiOxSvgzCBu3DNwrvmlJ1goronpS5D94QoZifloqKJGnBnpeiRyLRyxClD8pU6RJXnH_lcD-lY5jNMJhxyLrzG8f0ystPg74F8Alx8yf4HOuqhoem1mQTw0R4n5dkYQhC7A7Um6GgELd-re4ac8lICpMVlrY4kBZPtVePBQDMRj4qOj0hsXOj9Wezag9shvB5bVZDZwruLzL5LHMgT8k7m9qpvARHzYHKRrbMXOtteYYZ543UYthVu6UYg4b_ar6WDlgq9DqP3KjH5BGxpMz0a2aQ5tvUZNQja8uGXC19v3R9d3M9CU93L0Q"
+                        };*/
+
+            const key = {"kty":"RSA","e":"AQAB","n":"6ev8UMBRVdgWXaYeUFCi7hm-_kYgq8BKqkoHF5w4PedVXHv7J38YCD2ziNXzSAZ7Q2BkELZzHzRdfnrG1FDhXEzELZtJXkEg65UJa_FGrRj4pBwhKAXrfR6oTjxXyn3abgGtn00oC8_mXHgti-ufIXraVoBiRQym1qQbAF9Ek-bmGn5AY_ZmCGTC77ICppU_ehFmyfK5khu9TYCro9BZfbBOwZFt1sUP_Q8e4PQciTIhbe_v_WrbMg1c0qRHjQAW-z2H89SVSA9QASLUnkVuhReHBVcpuWXHQUW7axBNN5v8GfV-zuLfCO6ouBHWXB3fivxYTxAoyLotSWMJXmv68Q"};
+
+            //const publicKey = await window.crypto.subtle.importKey('jwk', key, algo, false, ['wrapKey']);
+            const publicKey = await window.crypto.subtle.importKey('jwk', key, algo, false, ['encrypt']);
+            console.log("encrypted value: " + new Uint8Array(publicKey));
+            var buffer =  await crypto.subtle.encrypt({name: 'RSA-OAEP'}, publicKey,
+                                      new TextEncoder().encode('asdf'));
+            buffer = new Uint8Array(buffer);
+
+            console.log("encrypted value: " + buffer);
+
+            var blob=new Blob([buffer], {type: 'application/download'});
+            var blobUrl=URL.createObjectURL(blob);
+            aEncsavefile.href=blobUrl;
+            aEncsavefile.download='b.enc';
+            aEncsavefile.click();
+
+             /* var key =  await crypto.subtle.importKey('spki', publicKey,
+                                {hash: 'SHA-256', name: 'RSA-OAEP'}, true,
+                                ['encrypt']);*/
+
+              /*var buffer =  await crypto.subtle.encrypt({name: 'RSA-OAEP'}, key,
+                                      new TextEncoder().encode('asdf'));
+
+              console.log("encrypted value: " + new Uint8Array(buffer));*/
+
+            //let cypher = await encrypt("my String...");
+            //wrapAESKey(cypher.key);
+       }
+
+       async function wrapAESKey(aeskey) {
+            console.log("inside");
+            const key = {"kty":"RSA",
+                        "e":"AQAB",
+                        "n":"t9PUjRszWuICkPKLhGiLMtVaLD7TOWIiOxSvgzCBu3DNwrvmlJ1goronpS5D94QoZifloqKJGnBnpeiRyLRyxClD8pU6RJXnH_lcD-lY5jNMJhxyLrzG8f0ystPg74F8Alx8yf4HOuqhoem1mQTw0R4n5dkYQhC7A7Um6GgELd-re4ac8lICpMVlrY4kBZPtVePBQDMRj4qOj0hsXOj9Wezag9shvB5bVZDZwruLzL5LHMgT8k7m9qpvARHzYHKRrbMXOtteYYZ543UYthVu6UYg4b_ar6WDlgq9DqP3KjH5BGxpMz0a2aQ5tvUZNQja8uGXC19v3R9d3M9CU93L0Q"
+                        };
+            const algo = {
+                name: 'RSA-OAEP',
+                hash: { name: 'SHA-256' }
+            };
+
+            //const aeskey = await window.crypto.subtle.generateKey({ name: 'AES-CBC', length: 256 }, true, ['encrypt', 'decrypt']);
+            const publicKey = await window.crypto.subtle.importKey('jwk', key, algo, false, ['wrapKey']);
+            const wrappedKey = ab2str(await window.crypto.subtle.wrapKey('raw', aeskey, publicKey, { name: 'RSA-OAEP' }));
+            console.log('wrappedKey: ' + wrappedKey);
+            //const privateKey = importPrivateKey();
+            //console.log("import key" + window.crypto.subtle.importKey('jwk', key, algo, false, ['wrapKey']));
+       }
+
+       async function encrypt(data) {
+            const key = await window.crypto.subtle.generateKey({ name: 'AES-CBC', length: 256 }, true, ['encrypt', 'decrypt']);
+            console.log("encrypt 1");
+            const iv = window.crypto.getRandomValues(new Uint8Array(16));
+            console.log("encrypt 2");
+            const cypher = ab2str(await window.crypto.subtle.encrypt({ name: 'AES-CBC', iv: iv }, key, str2ab(data)));
+            console.log("encrypt 3");
+            return {
+                data: cypher,
+                iv: iv,
+                key: key
+            };
+       }
+
+        async function importPrivateKey() {
+            const key = "asfasd";
+            const algo = {
+                name: 'RSA-OAEP',
+                hash: { name: 'SHA-256' }
+            };
+            return await window.crypto.subtle.importKey('jwk', key, algo, false, ['unwrapKey']);
+        }
+
+       function ab2str(buf) {
+            return String.fromCharCode.apply(null, new Uint16Array(buf));
+       }
+
+       function str2ab(str) {
+            let buf = new ArrayBuffer(str.length * 2);
+            let bufView = new Uint16Array(buf);
+            for (let i = 0, strLen = str.length; i < strLen; i++) {
+                bufView[i] = str.charCodeAt(i);
+            }
+            return buf;
+       }
+</script>
+
+</body></html>

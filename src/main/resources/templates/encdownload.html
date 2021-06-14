@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<!-- saved from url=(0014)about:internet -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <title>End to End Encryption-File Download</title>
+    <style>
+		body {
+	  		font-family: 'Helvetica', 'Arial', 'sans-serif';
+			color: black;
+			font-size: 11pt;
+		}
+
+		a, a:link, a:visited, a:active {
+			color: blue;
+			text-decoration: underline;
+		}
+
+		a:hover {
+			cursor:pointer;
+			color: red;
+		}
+
+		.black10pointcourier {
+	  		font-family: 'courier';
+			color: black;
+			font-size: 10pt;
+		}
+
+		.container {
+			width: 80%;
+			margin: 0 auto;
+		}
+
+		.dropzone {
+			border: 10px dashed gray;
+			width: 20%;
+			padding: 2% 2% 5% 2%;
+			text-align: center;
+			margin: 5px 0 5px 0;
+		}
+
+		.divTablefullwidth{
+			display: table;
+			width: 100%;
+		}
+
+		.divTable{
+			display: table;
+		}
+
+		.divTableRow {
+			display: table-row;
+		}
+		.divTableCell {
+			display: table-cell;
+			padding: 3px 3px;
+		}
+		.divTableBody {
+			display: table-row-group;
+		}
+
+		.greenspan {
+			color: green;
+		}
+
+		.redspan {
+			color: red;
+		}
+	</style></head>
+
+<body>
+<div class="container">
+    <div class="divTablefullwidth">
+        <div class="divTableBody">
+            <div class="divTableRow">
+                <div class="divTableCell" style="float: left;">
+                    <h1>End to End Encryption-File Download</h1>
+                </div>
+                <div class="divTableCell" style="float: right;">
+                    <h1>
+                        <button hidden="" id="btnRefresh" onclick="javascript:location.reload();">Refresh Page</button>
+                        <button hidden="" id="btnDivEncrypt" onclick="javascript:switchdiv(&#39;encrypt&#39;);" disabled="">Encrypt a File</button>
+                        <button hidden="" id="btnDivDecrypt" onclick="javascript:switchdiv(&#39;decrypt&#39;);">Decrypt a File</button>
+                    </h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container">
+    <hr>
+</div>
+
+<div class="container" id="divEncryptfile" style="display: block;">
+      <div class="divTable">
+        <div class="divTableBody">
+            <div class="divTableRow">
+                <div class="divTableCell">Password</div>
+                <div class="divTableCell"><input id="txtEncpassphrase" type="password" size="30" onkeyup="javascript:encvalidate();" value=""></div>
+                <div class="divTableCell">(minumum length eight characters, make sure it's strong!)</div>
+            </div>
+            <div class="divTableRow">
+                <div class="divTableCell">Password (retype)</div>
+                <div class="divTableCell"><input id="txtEncpassphraseretype" type="password" size="30" onkeyup="javascript:encvalidate();" value=""></div>
+                <div class="divTableCell"><span class="greenspan" id="spnCheckretype"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <p> </p>
+
+    <div>
+<!--        <div class="dropzone" id="encdropzone" ondrop="drop_handler(event);" ondragover="dragover_handler(event);" ondragend="dragend_handler(event);">-->
+<!--            <p>Drag and drop the file to be encrypted into this dropzone, or click <a onclick="javascript:encfileElem.click();">here</a> to select file.</p>-->
+<!--            <p><span id="spnencfilename"></span></p>-->
+<!--        </div>-->
+        <table>
+            <thead>
+            <tr>
+                <th> Files </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${files.empty}">
+                <td colspan="2"> No Files to Download </td>
+            </tr>
+            <tr th:each="file : ${files}">
+                <td><span th:text="${file}"> Title </span></td>
+            </tr>
+            </tbody>
+        </table>
+        <input hidden="" type="file" id="encfileElem" style="display:none" onchange="selectfile(this.files)">
+    </div>
+
+    <p> </p>
+
+    <div class="divTable">
+        <div class="divTableBody">
+            <div class="divTableRow">
+<!--                <form id="myForm" th:action="@{/upload}" enctype="multipart/form-data" method="post">-->
+                    <meta id="_csrf" name="_csrf" th:content="${_csrf.token}"/>
+                    <meta id="_csrf_header" name="_csrf_header" th:content="${_csrf.headerName}"/>
+                    <meta id="reqUUID" name="reqUUID" th:content="${reqUUID}"/>
+                    <meta id="file" name="file" th:content="${files[0].fileName}"/>
+                    <div class="divTableCell"><button id="btnEncrypt" onclick="javascript:encryptfile();" disabled="">Upload File</button></div>
+                    <div class="divTableCell"><span id="spnEncstatus"></span></div>
+<!--                </form>-->
+            </div>
+        </div>
+    </div>
+
+    <p> </p>
+
+    <div>
+        <a id="aEncsavefile" hidden=""><button>Save Encrypted File</button></a>
+    </div>
+
+    <p> </p>
+</div>
+
+<div class="container" id="divDecryptfile" style="display: none;">
+    <div class="divTable">
+        <div class="divTableBody">
+<!--            <div class="divTableRow">-->
+<!--                <div class="divTableCell"><input id="txtDecpassphrase" type="password" size="30" onkeyup="javascript:decvalidate();" value=""></div>-->
+<!--            </div>-->
+        </div>
+        <table align="left">
+            <thead>
+            <tr>
+                <th> File Name </th>
+                <th> File Expiry </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${files.empty}">
+                <td colspan="2"> No Files to Download </td>
+            </tr>
+            <tr th:each="file : ${files}">
+                <td><span th:text="${file.fileName}"> File Name </span></td>
+                <td><span th:text="${file.expiryTime}"> File Expiry </span></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p> </p>
+
+    <div>
+<!--        <div class="dropzone" id="decdropzone" ondrop="drop_handler(event);" ondragover="dragover_handler(event);" ondragend="dragend_handler(event);">-->
+<!--            <p>Drag and drop file to be decrypted into this dropzone, or click <a role="button" onclick="javascript:decfileElem.click();">here</a> to select file.</p>-->
+<!--            <p><span id="spndecfilename"></span></p>-->
+<!--        </div>-->
+        <input type="file" hidden="" id="decfileElem" style="display:none" onchange="selectfile(this.files)">
+    </div>
+
+    <p> </p>
+
+    <div class="divTable">
+        <div class="divTableBody">
+            <div class="divTableRow">
+<!--                <div class="divTableCell"><button id="btnDecrypt" onclick="javascript:downloadFile();">Download File</button></div>-->
+                <div class="divTableCell"><button id="btnDecrypt" onclick="javascript:downloadChunkFiles();">Download File</button></div>
+                <div class="divTableCell"><span id="spnDecstatus"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <p> </p>
+
+    <div>
+        <a id="aDecsavefile" hidden=""><button>Save Decrypted File</button></a>
+    </div>
+
+    <p> </p>
+</div>
+<br>
+
+
+
+
+<script type="text/javascript">
+	var mode=null;
+	var objFile=null;
+	var nexIter=false;
+	var oblob_1,oblob_2;
+
+	switchdiv('decrypt');
+
+	function switchdiv(t) {
+		if(t=='encrypt') {
+			divEncryptfile.style.display='block';
+			divDecryptfile.style.display='none';
+			btnDivEncrypt.disabled=true;
+			btnDivDecrypt.disabled=false;
+			mode='encrypt';
+		} else if(t=='decrypt') {
+			divEncryptfile.style.display='none';
+			divDecryptfile.style.display='block';
+			btnDivEncrypt.disabled=false;
+			btnDivDecrypt.disabled=true;
+			mode='decrypt';
+		}
+	}
+
+	function encvalidate() {
+<!--		if(txtEncpassphrase.value.length>=8 && txtEncpassphrase.value==txtEncpassphraseretype.value) {-->
+<!--		  spnCheckretype.classList.add("greenspan");-->
+<!--		  spnCheckretype.classList.remove("redspan");-->
+<!--		  spnCheckretype.innerHTML='&#10004;';-->
+<!--		} else {-->
+<!--		  spnCheckretype.classList.remove("greenspan");-->
+<!--		  spnCheckretype.classList.add("redspan");-->
+<!--  		  spnCheckretype.innerHTML='&#10006;';-->
+<!--		}-->
+
+		//if( txtEncpassphrase.value.length>=8 && txtEncpassphrase.value==txtEncpassphraseretype.value && objFile ) { btnEncrypt.disabled=false; } else { btnEncrypt.disabled=true; }
+		btnEncrypt.disabled=false;
+	}
+
+	function decvalidate() {
+		if( txtDecpassphrase.value.length>0 && objFile ) { btnDecrypt.disabled=false; } else { btnDecrypt.disabled=true; }
+	}
+
+	//drag and drop functions:
+	//https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/File_drag_and_drop
+	function drop_handler(ev) {
+		console.log("Drop");
+		ev.preventDefault();
+		// If dropped items aren't files, reject them
+		var dt = ev.dataTransfer;
+		if (dt.items) {
+			// Use DataTransferItemList interface to access the file(s)
+			for (var i=0; i < dt.items.length; i++) {
+				if (dt.items[i].kind == "file") {
+					var f = dt.items[i].getAsFile();
+					console.log("... file[" + i + "].name = " + f.name);
+					objFile=f;
+				}
+			}
+		} else {
+			// Use DataTransfer interface to access the file(s)
+			for (var i=0; i < dt.files.length; i++) {
+				console.log("... file[" + i + "].name = " + dt.files[i].name);
+			}
+			objFile=file[0];
+		}
+		displayfile()
+		if(mode=='encrypt') { encvalidate(); } else if(mode=='decrypt') { decvalidate(); }
+	}
+
+	function dragover_handler(ev) {
+		console.log("dragOver");
+		// Prevent default select and drag behavior
+		ev.preventDefault();
+	}
+
+	function dragend_handler(ev) {
+		console.log("dragEnd");
+		// Remove all of the drag data
+		var dt = ev.dataTransfer;
+		if (dt.items) {
+			// Use DataTransferItemList interface to remove the drag data
+			for (var i = 0; i < dt.items.length; i++) {
+				dt.items.remove(i);
+			}
+		} else {
+			// Use DataTransfer interface to remove the drag data
+			ev.dataTransfer.clearData();
+		}
+	}
+
+	function selectfile(Files) {
+		objFile=Files[0];
+		displayfile()
+		if(mode=='encrypt') { encvalidate(); } else if(mode=='decrypt') { decvalidate(); }
+	}
+
+	function displayfile() {
+		var s;
+		var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+		var bytes=objFile.size;
+		var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+		if(i==0) { s=bytes + ' ' + sizes[i]; } else { s=(bytes / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i]; }
+
+		if(mode=='encrypt') {
+			spnencfilename.textContent=objFile.name + ' (' + s + ')';
+		} else if(mode=='decrypt') {
+			spndecfilename.textContent=objFile.name + ' (' + s + ')';
+		}
+	}
+
+	function readfile(file){
+		return new Promise((resolve, reject) => {
+			var fr = new FileReader();
+			fr.onload = () => {
+			    console.log("sucecss at file reader");
+				resolve(fr.result );
+			};
+			fr.onerror = (e) => {
+			    console.log("error at file reader: "+ e.toString());
+				reject(e.toString());
+			};
+			fr.readAsArrayBuffer(file);
+		});
+	}
+
+	async function encryptfile() {
+		btnEncrypt.disabled=true;
+
+		var plaintextbytes=await readfile(objFile)
+		.catch(function(err){
+			console.error(err);
+		});
+		var plaintextbytes=new Uint8Array(plaintextbytes);
+
+		var pbkdf2iterations=10000;
+		var passphrasebytes=new TextEncoder("utf-8").encode(txtEncpassphrase.value);
+		var pbkdf2salt=window.crypto.getRandomValues(new Uint8Array(8));
+
+		var passphrasekey=await window.crypto.subtle.importKey('raw', passphrasebytes, {name: 'PBKDF2'}, false, ['deriveBits'])
+		.catch(function(err){
+			console.error(err);
+		});
+		console.log('passphrasekey imported');
+
+		var pbkdf2bytes=await window.crypto.subtle.deriveBits({"name": 'PBKDF2', "salt": pbkdf2salt, "iterations": pbkdf2iterations, "hash": 'SHA-256'}, passphrasekey, 384)
+		.catch(function(err){
+			console.error(err);
+		});
+		console.log('pbkdf2bytes derived');
+		pbkdf2bytes=new Uint8Array(pbkdf2bytes);
+
+		keybytes=pbkdf2bytes.slice(0,32);
+		ivbytes=pbkdf2bytes.slice(32);
+
+		var key=await window.crypto.subtle.importKey('raw', keybytes, {name: 'AES-CBC', length: 256}, false, ['encrypt'])
+		.catch(function(err){
+			console.error(err);
+		});
+		console.log('key imported');
+
+		var cipherbytes=await window.crypto.subtle.encrypt({name: "AES-CBC", iv: ivbytes}, key, plaintextbytes)
+		.catch(function(err){
+			console.error(err);
+		});
+
+		if(!cipherbytes) {
+		 	spnEncstatus.classList.add("redspan");
+			spnEncstatus.innerHTML='<p>Error encrypting file.  See console log.</p>';
+			return;
+		}
+
+		console.log('plaintext encrypted');
+		cipherbytes=new Uint8Array(cipherbytes);
+
+		var resultbytes=new Uint8Array(cipherbytes.length+16)
+		resultbytes.set(new TextEncoder("utf-8").encode('Salted__'));
+		resultbytes.set(pbkdf2salt, 8);
+		resultbytes.set(cipherbytes, 16);
+
+		var blob=new Blob([resultbytes], {type: 'application/download'});
+		var blobUrl=URL.createObjectURL(blob);
+		aEncsavefile.href=blobUrl;
+		aEncsavefile.download=objFile.name + '.enc';
+
+	 	spnEncstatus.classList.add("greenspan");
+		spnEncstatus.innerHTML='<p>File encrypted.</p>';
+		aEncsavefile.hidden=true;
+
+        console.log("csrf is " + document.querySelector('meta[name="_csrf"]').content);
+
+        //let filekc = await fetch(blobUrl).then(r => r.blob()).then(blobFile => new File([blobFile], "a.pdf.enc", { type: "multipart/form-data" }));
+        let filekc = new File([blob], "b.pdf.enc", { type: "multipart/form-data" });
+
+        //Xhr
+		var oReq = new XMLHttpRequest();
+        oReq.open("POST", "/upload", true);
+        oReq.setRequestHeader('x-csrf-token', document.querySelector('meta[name="_csrf"]').content);
+        //oReq.setRequestHeader("Content-Type", "multipart/form-data");
+        //oReq.setRequestHeader("Accept", "application/json");
+
+        oReq.onload = function (oEvent) {
+          console.log("uploaded...");
+        };
+        //var blob = new Blob(['abc123'], {type: 'text/plain'});
+        var formData = new FormData();
+        formData.append("file", filekc);
+        oReq.send(formData);
+        //xhr
+
+		//aEncsavefile.click();
+	}
+
+	function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    var CountdownLatch = function (limit){
+      this.limit = limit;
+      this.count = 0;
+      this.waitBlock = function (){};
+    };
+
+    CountdownLatch.prototype.countDown = function (){
+      this.count = this.count + 1;
+      console.log("this.count  is ===>" + this.count);
+      if(this.limit == this.count){
+        console.log("inside waitblock  is ===>" + this.count);
+        return this.waitBlock();
+      }
+    };
+
+    CountdownLatch.prototype.await = function(callback){
+      this.waitBlock = callback;
+    };
+
+	async function downloadChunkFiles() {
+	   var barrier = new CountdownLatch(2);
+	   await downloadFile1(1,barrier);
+	   console.log("chunk 1 completes");
+	   await downloadFile1(2,barrier);
+	   console.log("chunk 2 completes");
+
+        //await sleep(30000);
+        barrier.await(function(){
+            console.log("latch released....");
+            var blob=new Blob([oblob_1,oblob_2], {type: 'application/download'});
+            var blobUrl=URL.createObjectURL(blob);
+            aDecsavefile.href=blobUrl;
+            //aDecsavefile.download='output.zip';
+            aDecsavefile.download='downloaded.' + document.querySelector('meta[name="file"]').content;
+            aDecsavefile.click();
+
+            spnDecstatus.classList.add("greenspan");
+            spnDecstatus.innerHTML='<p>File Download.</p>';
+            //aDecsavefile.hidden=false;
+		});
+        console.log("all done..");
+	}
+
+	async function downloadFile1(chunkNum,barrier){
+		//Xhr
+		console.log("chunkNum inside" + chunkNum);
+		var oReq = new XMLHttpRequest();
+		//oReq.open("POST", "/download/input.pdf", true);
+        oReq.open("POST", "/encdownload/" + document.querySelector('meta[name="reqUUID"]').content, true);
+        oReq.setRequestHeader('x-csrf-token', document.querySelector('meta[name="_csrf"]').content);
+        oReq.overrideMimeType("application/octet-stream");
+        oReq.responseType = "arraybuffer";
+        //oReq.setRequestHeader("Content-Type", "multipart/form-data");
+        //oReq.setRequestHeader("Accept", "application/json");
+
+        oReq.onload = function (oEvent) {
+              console.log("download...");
+              var blob = new Blob([oReq.response], {type: "application/download"});
+              var contentDispo = oEvent.currentTarget.getResponseHeader('Content-Disposition');
+              var fileName = contentDispo.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)[1];
+               console.log("fileName is " + fileName);
+<!--		      var blobUrl=URL.createObjectURL(blob);-->
+<!--		      aEncsavefile.href=blobUrl;-->
+<!--		      aEncsavefile.download='a.pdf.enc';-->
+<!--		      aEncsavefile.click();-->
+
+		      blob.lastModifiedDate = new Date();
+              blob.name = "output.zip";
+              console.log("before decryptfile");
+              //var blob1 = blob.arrayBuffer();
+              console.log("after array buffer");
+              //decryptfile(blob);
+              decryptfile2(blob,chunkNum,barrier);
+        };
+        //var blob = new Blob(['abc123'], {type: 'text/plain'});
+        var formData = new FormData();
+        formData.append("fileName", document.querySelector('meta[name="file"]').content);
+        formData.append("chunk", chunkNum);
+        oReq.send(formData);
+        //xhr
+	}
+
+	async function downloadFile(){
+		//Xhr
+		var oReq = new XMLHttpRequest();
+		//oReq.open("POST", "/download/input.pdf", true);
+        oReq.open("POST", "/encdownload/" + document.querySelector('meta[name="reqUUID"]').content, true);
+        oReq.setRequestHeader('x-csrf-token', document.querySelector('meta[name="_csrf"]').content);
+        oReq.overrideMimeType("application/octet-stream");
+        oReq.responseType = "arraybuffer";
+        //oReq.setRequestHeader("Content-Type", "multipart/form-data");
+        //oReq.setRequestHeader("Accept", "application/json");
+
+        oReq.onload = function (oEvent) {
+              console.log("download...");
+              var blob = new Blob([oReq.response], {type: "application/download"});
+              var contentDispo = oEvent.currentTarget.getResponseHeader('Content-Disposition');
+              var fileName = contentDispo.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)[1];
+               console.log("fileName is " + fileName);
+<!--		      var blobUrl=URL.createObjectURL(blob);-->
+<!--		      aEncsavefile.href=blobUrl;-->
+<!--		      aEncsavefile.download='a.pdf.enc';-->
+<!--		      aEncsavefile.click();-->
+
+		      blob.lastModifiedDate = new Date();
+              blob.name = "output.zip";
+              console.log("before decryptfile");
+              //var blob1 = blob.arrayBuffer();
+              console.log("after array buffer");
+              //decryptfile1(blob1);
+              decryptfile(blob);
+        };
+        //var blob = new Blob(['abc123'], {type: 'text/plain'});
+        var formData = new FormData();
+        formData.append("fileName", document.querySelector('meta[name="file"]').content);
+        oReq.send(formData);
+        //xhr
+	}
+
+    async function decryptKey(kekbytes) {
+         const algo = {
+                name: 'RSA-OAEP',
+                hash: { name: 'SHA-256' }
+        };
+
+<!--        const pubkey = {"alg":"RSA-OAEP-256","e":"AQAB","ext":true,"key_ops":["encrypt","wrapKey"],"kty":"RSA","n":"04-iXmH24XtrmhDywL7bZLcgmIql0n5V-4LC2pMcZg6dVzBkSG2v2EFRjmwIXRqxibMW03j_sqSJRoyIZhuE4IIpW-eys4BrGzal7XuXRl1Wn4hIoYsj8mwBS1M9UHg_webARk7pRxAvfHg79NgrRjJXwaVDzNKaU5jP8Qbq6uHHzvFdkRbigX_Dp_hMstsfk0Yz5tVfgKlHJjbL0l8XsR6bNzWdv2-TBTyS9mMl9SLp4V4MYkjpWsndrYtDTy4AU5GJBnOkJ7e_7SGr79ksyE4jwJfDy7IqzTb2y-rFMP87fd7f7fdrjOv86swUnopfbuoEZ8N2B3pjjzh_9jMKsQ"};-->
+<!--        console.log("after key");-->
+<!--        var publickey = await window.crypto.subtle.importKey('jwk', pubkey, algo, false, ['encrypt']);-->
+<!--        var kekbytes = new TextEncoder("utf-8").encode("kk");-->
+<!--        var kekbytes =  await crypto.subtle.encrypt({name: 'RSA-OAEP'}, publickey, kekbytes);-->
+<!--        console.log("completed1");-->
+
+        //const key = {"alg":"RSA-OAEP-256","d":"CuJoKGJyZPHoXI4UKzH2kCUyzl5NvzlkO5Mj6sJoUuDcG_T_p9FK232q0EDDImUh7rNx0HH4d8yqymAnEVfHm5Rew911DnKkMAt8-G2kIAjj0MPedr81m36Oh31SGX6CSzvPtx5OtqsAwm7eKM_pVAx5gts5lINeUMA7LIueUPSyVGM2-mQBvUHcYxxefeiSYm05Y9U7B-37r08ual4sdau2TTr4j4iMum5dp0ccn0mdc2T43JvpxMKxUYMQUV_5ii1nVmsTPEBAVR2PvZl1COI1qRm562yArfHxDZBrURmhivcTbmTpxV56eEgtVgEc0eqTOWpLljTVLZ4pcDOgAQ","dp":"Fb8_mNdp0KCqGXcObafLd7u-H37XGdrUQkeigzR65GsHNmF-jKN4d6EI7aAmHYTADttSU965RLWBHzJZ7OLITcY1cESzE6LeHjbchypdbnxG1xQMAhOVPv-3qiSQpw0xUak-qiq_KpDygS_uHSyBAbskZEi971VPMNFfosI5SkE","dq":"F2WVY1Dj7Z4avMZO7BndMTy_37fUtW407MXYXaqyeEQ7R5Vrg2an6hm1YrXhprQs9XyVjm1-TtMzuqnIb1leTYkchPPCCOqg2hLNRcyqv8AIL2oMyAza6oVGGIC0eABlwe2pxRZoXcz0tUKeokmF0bucV6pjH3PoU7I1era-6AE","e":"AQAB","ext":true,"key_ops":["decrypt","unwrapKey"],"kty":"RSA","n":"04-iXmH24XtrmhDywL7bZLcgmIql0n5V-4LC2pMcZg6dVzBkSG2v2EFRjmwIXRqxibMW03j_sqSJRoyIZhuE4IIpW-eys4BrGzal7XuXRl1Wn4hIoYsj8mwBS1M9UHg_webARk7pRxAvfHg79NgrRjJXwaVDzNKaU5jP8Qbq6uHHzvFdkRbigX_Dp_hMstsfk0Yz5tVfgKlHJjbL0l8XsR6bNzWdv2-TBTyS9mMl9SLp4V4MYkjpWsndrYtDTy4AU5GJBnOkJ7e_7SGr79ksyE4jwJfDy7IqzTb2y-rFMP87fd7f7fdrjOv86swUnopfbuoEZ8N2B3pjjzh_9jMKsQ","p":"6LrUsjSdg7LczriYsYD3c9gdOuYGDHRMy9NjRlqMfqizTx7OQqJoeB7KRO-aPPwNhxSd0Di7a3cheLRM4pm3dCZCJuHf6NbFsEgD7jq3THygqawwaakFoDp3zQKgAT9jcU8auqqcZatE0By7J70KIEcnRUXR2liPY4OdLxBjgrE","q":"6Lby3Sj1zS6ZHRBEeWf7JblA8N_2kae9mZ1H5bL_19qHRxaxlqNjOFxLPCd9Avwj9uQHHElh4dTRQUrVgBbo1xC_Y_qFcjayDM7TdZrFdx0ZHbs9Cpe33YGY9EI-HSxSTXMbzw117QN6RxL-rOZ6W1v3lGgT9ssJCYoqsi_aCAE","qi":"X_GUBRFYSfMqbbqfOwCDZiMmszeETiVcPNj4qfTci21C5Jb3pkXh0viRzmAzkDZBK5FBEPEEeh8A9Rzx8QyJJXPSptFDhl8Ks9m48GMApDfbs0cKb-PN-iHHL9zqw87wUPakgADWATfaECDhXFDRyiG3kF-sWS6B_yZPKoxWbwE"};
+<!--        const key1 = localStorage.getItem("privateKey");-->
+<!--        console.log("using private key" + key1);-->
+<!--        const key = JSON.parse(key1);-->
+        //const key = {"alg":"RSA-OAEP-256","d":"A0PO-az3qCuIQb3mxjZDaVvy6173utm-Ltc0FdTajOOcP1I6etQf3bU5c720ScGSRmeu0igZM1LPY4A2uzwDRSRUxkySE16bma4k8S8owjnr_eo8oLOQwbTCmRghccyd5SfV5pA8OQ7-Jj7zegLFaBufF-ltJkI5zzIViSbai9xeD2JhWlIlD96Z0PtnsrLjcL3GdRHvrvQKqBvnk2-nTe0AJlW9LOW2F5RY5GdRa2kWlX40gqyKdsll049ezkMKn22mGpHHkAF79vYYJ2xG35k14hC02rWiXWlBaTEcdygXEBS1KYgdvCtXwjeK5hWeP4j-JRjbOw7KPFwGsxdNtw","dp":"Y_0kdbbAn4U27YnJb6yDqvx1cGyaODWKzMjjSNpgwuaTdDAihJ56lfhvt6_-VvpZVTwSiyrxpVySLA7jMroomn7ZU4XjyT-i8LAxiFlwCoiSPyW4GlUI9woKi6iRZCg22Wg96JppUrZVtGFbWDIXj4AFmlJ0W5z-bj-vss7O_Wc","dq":"WjNMBmkP1aeRQMYK0_oBC6n5mlOJsRuHNtH5BJ1-wOTxC3Ah1cFSjRb0axzOuCSURLLUC5MK6dAYskDvrSHi2Rc5T1SSrB1gQs947x7ZrmynWxSyMWsHb2Bhv0ZeCR5ct_eIq2bIwfPGI5vGZHQTckoGV6EF3joFjcixZCMIPjc","e":"AQAB","ext":true,"key_ops":["decrypt","unwrapKey"],"kty":"RSA","n":"27r10XQA-ZvgHKjDBSx_qoE6Y8GlZ6Wv0j7snI38lwRfow-9bac2bkm6D9CJdovA-ZXtJG1E22ePVr5bYPVfc5YSATepmwqjob4aTOdUW6pHk4YCw03XqUTdF06m_ig3mRnfPlJ9471RWkEpZTjWhnUm_ebtwkgWdOI0MIyuJZ2ZcC33WOrVkL7AoZ5wyFo3Yv_czJU28M1-42Ye8vgfFl1jxjzMqXo9Hw3s9xjLJ__MrrUK0RGT4ULQVGOqLX0G8oHBu_YdSOPFchg2BT41E9ODuh6Bsa7dtYkjFyXKIppBIYXUqwcpeiUSeEHw-Wy9tZMt-eCqJ2XDa5ym91fcsQ","p":"_VVI9Se9KOvsgsNpYq4oMh5ZBTdMt8z2X6jALFB_IHwMvB0ps90x7wb5YVoNEsfwFPSbSvF4PS8dLAqP-XtHDjJLLfuKI_-vZ2IRwpwnvsQ4pXlMIu1WbedfaXEAfftq-HWlacozS9XsSu3bQjvLPwI3yBqCo16foKfUPcfdC_M","q":"3gseM0MrGFTqb2a4n1wyK_kWvn-3bTLSguG37Q_ZrOXVwIc1qhW3Hdolz0xlPmPL0Wmi2LX-BwKNlepiFM3kZJnCdu0pq_CKn1SRaj4HfklseQFKiGHbqAiMsb0RWfp1sywwwsVzhWKXU6CXs0BqOBLuC0hkYZRb9o9JMYP60cs","qi":"8K0VANg6Rl_40OScxQIyQ3A6n5UXcYDytpQFGngDElD1HOCKAZo0DZr2xvIjTwDn0alBufSWX8d3CXoolZMBT04e8X6tPrbO5ZKXGiTyik4hznCTrN9Y8tpHGiX14BD9QhIq8F0xBv1fUWqDxHvWz1uZbGwnqtKc405QyoxL5G4"};
+
+<!--        localStorage.setItem("pKey",'{"alg":"RSA-OAEP-256","d":"A0PO-az3qCuIQb3mxjZDaVvy6173utm-Ltc0FdTajOOcP1I6etQf3bU5c720ScGSRmeu0igZM1LPY4A2uzwDRSRUxkySE16bma4k8S8owjnr_eo8oLOQwbTCmRghccyd5SfV5pA8OQ7-Jj7zegLFaBufF-ltJkI5zzIViSbai9xeD2JhWlIlD96Z0PtnsrLjcL3GdRHvrvQKqBvnk2-nTe0AJlW9LOW2F5RY5GdRa2kWlX40gqyKdsll049ezkMKn22mGpHHkAF79vYYJ2xG35k14hC02rWiXWlBaTEcdygXEBS1KYgdvCtXwjeK5hWeP4j-JRjbOw7KPFwGsxdNtw","dp":"Y_0kdbbAn4U27YnJb6yDqvx1cGyaODWKzMjjSNpgwuaTdDAihJ56lfhvt6_-VvpZVTwSiyrxpVySLA7jMroomn7ZU4XjyT-i8LAxiFlwCoiSPyW4GlUI9woKi6iRZCg22Wg96JppUrZVtGFbWDIXj4AFmlJ0W5z-bj-vss7O_Wc","dq":"WjNMBmkP1aeRQMYK0_oBC6n5mlOJsRuHNtH5BJ1-wOTxC3Ah1cFSjRb0axzOuCSURLLUC5MK6dAYskDvrSHi2Rc5T1SSrB1gQs947x7ZrmynWxSyMWsHb2Bhv0ZeCR5ct_eIq2bIwfPGI5vGZHQTckoGV6EF3joFjcixZCMIPjc","e":"AQAB","ext":true,"key_ops":["decrypt","unwrapKey"],"kty":"RSA","n":"27r10XQA-ZvgHKjDBSx_qoE6Y8GlZ6Wv0j7snI38lwRfow-9bac2bkm6D9CJdovA-ZXtJG1E22ePVr5bYPVfc5YSATepmwqjob4aTOdUW6pHk4YCw03XqUTdF06m_ig3mRnfPlJ9471RWkEpZTjWhnUm_ebtwkgWdOI0MIyuJZ2ZcC33WOrVkL7AoZ5wyFo3Yv_czJU28M1-42Ye8vgfFl1jxjzMqXo9Hw3s9xjLJ__MrrUK0RGT4ULQVGOqLX0G8oHBu_YdSOPFchg2BT41E9ODuh6Bsa7dtYkjFyXKIppBIYXUqwcpeiUSeEHw-Wy9tZMt-eCqJ2XDa5ym91fcsQ","p":"_VVI9Se9KOvsgsNpYq4oMh5ZBTdMt8z2X6jALFB_IHwMvB0ps90x7wb5YVoNEsfwFPSbSvF4PS8dLAqP-XtHDjJLLfuKI_-vZ2IRwpwnvsQ4pXlMIu1WbedfaXEAfftq-HWlacozS9XsSu3bQjvLPwI3yBqCo16foKfUPcfdC_M","q":"3gseM0MrGFTqb2a4n1wyK_kWvn-3bTLSguG37Q_ZrOXVwIc1qhW3Hdolz0xlPmPL0Wmi2LX-BwKNlepiFM3kZJnCdu0pq_CKn1SRaj4HfklseQFKiGHbqAiMsb0RWfp1sywwwsVzhWKXU6CXs0BqOBLuC0hkYZRb9o9JMYP60cs","qi":"8K0VANg6Rl_40OScxQIyQ3A6n5UXcYDytpQFGngDElD1HOCKAZo0DZr2xvIjTwDn0alBufSWX8d3CXoolZMBT04e8X6tPrbO5ZKXGiTyik4hznCTrN9Y8tpHGiX14BD9QhIq8F0xBv1fUWqDxHvWz1uZbGwnqtKc405QyoxL5G4"}');-->
+<!--        const key1 = localStorage.getItem("pKey");-->
+        const key1 = localStorage.getItem("privateKey");
+        console.log("key1 is " + key1);
+        const key = JSON.parse(key1);
+        var privatekey = await window.crypto.subtle.importKey('jwk', key, algo, false, ['decrypt']);
+        console.log("1");
+        //kekbytes = new Uint8Array(kekbytes);
+        console.log("2");
+        var buffer =  await crypto.subtle.decrypt({name: 'RSA-OAEP'}, privatekey, kekbytes)
+        .catch(function(err){
+			console.error(err);
+		});
+        console.log("after key decrypt " + buffer);
+        console.log("completed2" + buffer);
+        return buffer;
+	}
+
+    function ab2str(buf) {
+        return String.fromCharCode.apply(null, new Uint16Array(buf));
+    }
+
+    function str2ab(str) {
+        let buf = new ArrayBuffer(str.length * 2);
+        let bufView = new Uint16Array(buf);
+        for (let i = 0, strLen = str.length; i < strLen; i++) {
+            bufView[i] = str.charCodeAt(i);
+        }
+        return buf;
+    }
+
+	async function decryptfile(dlobjfile) {
+	    btnDecrypt.disabled=true;
+	    console.log("0");
+		var cipherbytes=await readfile(dlobjfile)
+		.catch(function(err){
+			console.error(err);
+		});
+		console.log("0.5");
+		var cipherbytes=new Uint8Array(cipherbytes);
+        console.log("1"+cipherbytes.length);
+        var kekbytes = cipherbytes.slice(0,256);
+        cipherbytes = cipherbytes.slice(256);
+        //Decrypt KEK
+        var pbkdf2bytes = await decryptKey(kekbytes)
+        .catch(function(err){
+			console.error(err);
+		});
+
+        console.log("5 is " + pbkdf2bytes);
+
+<!--		var pbkdf2iterations=10000;-->
+<!--		var passphrasebytes=new TextEncoder("utf-8").encode(txtDecpassphrase.value);-->
+<!--		var pbkdf2salt=cipherbytes.slice(8,16);-->
+
+<!--        console.log("2");-->
+<!--		var passphrasekey=await window.crypto.subtle.importKey('raw', passphrasebytes, {name: 'PBKDF2'}, false, ['deriveBits'])-->
+<!--		.catch(function(err){-->
+<!--			console.error(err);-->
+
+<!--		});-->
+<!--		console.log('passphrasekey imported');-->
+
+<!--		var pbkdf2bytes=await window.crypto.subtle.deriveBits({"name": 'PBKDF2', "salt": pbkdf2salt, "iterations": pbkdf2iterations, "hash": 'SHA-256'}, passphrasekey, 384)-->
+<!--		.catch(function(err){-->
+<!--			console.error(err);-->
+<!--		});-->
+<!--		console.log('pbkdf2bytes derived');-->
+<!--		pbkdf2bytes=new Uint8Array(pbkdf2bytes);-->
+
+		keybytes=pbkdf2bytes.slice(0,16);
+		ivbytes=pbkdf2bytes.slice(16);
+
+		//cipherbytes=cipherbytes.slice(32);
+
+        console.log("keybytes is " + keybytes);
+		var key=await window.crypto.subtle.importKey('raw', keybytes, {name: 'AES-CBC', length: 256}, false, ['decrypt'])
+		.catch(function(err){
+			console.error(err);
+		});
+		console.log('key imported');
+
+		var plaintextbytes=await window.crypto.subtle.decrypt({name: "AES-CBC", iv: ivbytes}, key, cipherbytes)
+		.catch(function(err){
+			console.error(err);
+		});
+
+<!--		if(!plaintextbytes) {-->
+<!--		 	spnDecstatus.classList.add("redspan");-->
+<!--			spnDecstatus.innerHTML='<p>Error decrypting file.  Password may be incorrect.</p>';-->
+<!--			return;-->
+<!--		}-->
+
+		console.log('ciphertext decrypted');
+		plaintextbytes=new Uint8Array(plaintextbytes);
+
+		var blob=new Blob([plaintextbytes], {type: 'application/download'});
+		var blobUrl=URL.createObjectURL(blob);
+		aDecsavefile.href=blobUrl;
+		//aDecsavefile.download='output.zip';
+		aDecsavefile.download='downloaded.' + document.querySelector('meta[name="file"]').content;
+        aDecsavefile.click();
+
+	 	spnDecstatus.classList.add("greenspan");
+		spnDecstatus.innerHTML='<p>File decrypted.</p>';
+		//aDecsavefile.hidden=false;
+	}
+
+	async function decryptfile2(dlobjfile,chunk,barrier) {
+	    btnDecrypt.disabled=true;
+	    console.log("0");
+		var cipherbytes=await readfile(dlobjfile)
+		.catch(function(err){
+			console.error(err);
+		});
+		console.log("0.5");
+		var cipherbytes=new Uint8Array(cipherbytes);
+        console.log("1"+cipherbytes.length);
+        var kekbytes = cipherbytes.slice(0,256);
+        cipherbytes = cipherbytes.slice(256);
+        //Decrypt KEK
+        var pbkdf2bytes = await decryptKey(kekbytes)
+        .catch(function(err){
+			console.error(err);
+		});
+
+        console.log("5 is " + pbkdf2bytes);
+
+<!--		var pbkdf2iterations=10000;-->
+<!--		var passphrasebytes=new TextEncoder("utf-8").encode(txtDecpassphrase.value);-->
+<!--		var pbkdf2salt=cipherbytes.slice(8,16);-->
+
+<!--        console.log("2");-->
+<!--		var passphrasekey=await window.crypto.subtle.importKey('raw', passphrasebytes, {name: 'PBKDF2'}, false, ['deriveBits'])-->
+<!--		.catch(function(err){-->
+<!--			console.error(err);-->
+
+<!--		});-->
+<!--		console.log('passphrasekey imported');-->
+
+<!--		var pbkdf2bytes=await window.crypto.subtle.deriveBits({"name": 'PBKDF2', "salt": pbkdf2salt, "iterations": pbkdf2iterations, "hash": 'SHA-256'}, passphrasekey, 384)-->
+<!--		.catch(function(err){-->
+<!--			console.error(err);-->
+<!--		});-->
+<!--		console.log('pbkdf2bytes derived');-->
+<!--		pbkdf2bytes=new Uint8Array(pbkdf2bytes);-->
+
+		keybytes=pbkdf2bytes.slice(0,16);
+		ivbytes=pbkdf2bytes.slice(16);
+
+		//cipherbytes=cipherbytes.slice(32);
+
+        console.log("keybytes is " + keybytes);
+		var key=await window.crypto.subtle.importKey('raw', keybytes, {name: 'AES-CBC', length: 256}, false, ['decrypt'])
+		.catch(function(err){
+			console.error(err);
+		});
+		console.log('key imported');
+
+		var plaintextbytes=await window.crypto.subtle.decrypt({name: "AES-CBC", iv: ivbytes}, key, cipherbytes)
+		.catch(function(err){
+			console.error(err);
+		});
+
+<!--		if(!plaintextbytes) {-->
+<!--		 	spnDecstatus.classList.add("redspan");-->
+<!--			spnDecstatus.innerHTML='<p>Error decrypting file.  Password may be incorrect.</p>';-->
+<!--			return;-->
+<!--		}-->
+
+		console.log('ciphertext decrypted');
+		plaintextbytes=new Uint8Array(plaintextbytes);
+
+		if (chunk == 1) {
+            oblob_1 = plaintextbytes;
+        } else {
+            oblob_2 = plaintextbytes;
+        }
+        barrier.countDown();
+        spnDecstatus.classList.add("greenspan");
+        spnDecstatus.innerHTML='<p>File Part' + chunk + ' Downloaded.</p>';
+        //aDecsavefile.hidden=false;
+	}
+</script>
+
+
+</body></html>

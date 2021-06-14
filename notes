@@ -1,0 +1,278 @@
+crypto.subtle.generateKey
+crypto.getRandomValues
+crypto.subtle.importKey
+crypto.subtle.deriveBits
+crypto.subtle.importKey
+
+https://getstream.io/blog/web-crypto-api-chat/
+==
+crypto.subtle.generateKey -- Returns KeyOperation instead of Promise ==> https://docs.microsoft.com/en-us/previous-versions/windows/internet-explorer/ie-developer/dev-guides/dn265046(v=vs.85)?redirectedfrom=MSDN
+crypto.subtle.exportKey -- Returns KeyOperation instead of Promise
+crypto.getRandomValues -- all support
+crypto.subtle.importKey -- Returns KeyOperation instead of Promise
+crypto.subtle.deriveBits -- No support -- only for PBKDF2. so ignore :)
+crypto.subtle.encrypt -- Returns CryptoOperation instead of Promise ==> https://stackoverflow.com/questions/46359919/using-subtlecrypto-in-ie-11
+crypto.subtle.decrypt -- Returns CryptoOperation instead of Promise
+==>
+https://social.msdn.microsoft.com/Forums/sqlserver/en-US/5b620660-1973-4234-a0a4-44c6110c9430/web-crypto-api-with-ie11-aesgcm?forum=iewebdevelopment,
+https://stackoverflow.com/questions/41449185/how-to-decrypt-data-from-the-result-of-an-ie-11-encrypt-operation-using-aes-gcm
+
+
+
+
+https://www.devglan.com/spring-boot/spring-boot-file-upload-download
+
+https://www.devglan.com/react-js/file-upload-react-spring-rest
+
+document.getElementById('download').click();
+<a href="https://docs.google.com/uc?id=0B0jH18Lft7ypSmRjdWg1c082Y2M" download id="download" hidden>click</a>
+
+
+https://medium.com/@danismaz.furkan/basic-csrf-attack-simulation-protection-with-spring-security-82c37810a90
+
+https://medium.com/@danismaz.furkan/basic-csrf-attack-simulation-protection-with-spring-security-82c37810a90
+
+https://www.meixler-tech.com/web-browser-based-file-encryption-decryption.html
+
+https://www.w3.org/TR/WebCryptoAPI/
+
+https://saferequest.net/en/p/how-we-built-end-to-end-encryption-in-a-file-transfer-service
+https://joji.me/en-us/blog/processing-huge-files-using-filereader-readasarraybuffer-in-web-browser/
+
+https://deliciousbrains.com/using-javascript-file-api-to-avoid-file-upload-limits/
+
+https://web.dev/streams/
+
+https://stackoverflow.com/questions/39682465/javascript-writing-to-download-stream
+
+http://qnimate.com/asymmetric-encryption-using-web-cryptography-api/
+https://gist.github.com/deiu/2c3208c89fbc91d23226
+
+1. user ==> click on link /filexfr/landing?id=094c2901-63a6-4fc0-9978-9725f6f37653&value=086be562-2724-43f4-9d2d-4b4e4cb9c49c
+2. system ==> check "UUID" and render landing page for OTP with embedded 2nd link /filexfr/otp?bfa38e28-3811-4e75-83e6-44b76c1b79c8
+3. user ==> enter otp and submit to /filexfr/otp?bfa38e28-3811-4e75-83e6-44b76c1b79c8.
+4. system ==> validate OTP and render list/browse page + session + csrf embed + 3rd link /filexfr/download?c0781cda-ef15-40b3-be90-431e7b2ef291 embed.
+5. user ==> click on download or upload the file and submit.
+4. system ==> validate session + csrf and download/upload the file.
+
+Infosys@123
+upload:
+--
+1. server ==> generates RSA key pair. convert public key to JWK. embed in page and send.
+2. browser ==> generate random AES key. wrap with public key. encrypt with AES and send it to server.
+3. server ==> unwrap the AES key using RSA private key. decrypt the file and re-encrypt. discard AES key, RSA private key.
+
+download:
+--
+1. server ==> generates RSA key pair. convert public key to JWK. embed in page and send.
+2. server ==> encrypt the file using random AES key, wrap the key using RSA private key and send.
+2. browser ==> take encrypted AES key. unwrap using RSA public key. decrypt the file and download.
+
+https://stackoverflow.com/questions/66389070/generating-public-key-from-jwk
+https://stackoverflow.com/questions/55525628/rsa-encryption-with-oaep-between-java-and-javascript
+
+https://api.video/blog/tutorials/uploading-large-files-with-javascript
+
+
+{"kty":"RSA","e":"AQAB","n":"6ev8UMBRVdgWXaYeUFCi7hm-_kYgq8BKqkoHF5w4PedVXHv7J38YCD2ziNXzSAZ7Q2BkELZzHzRdfnrG1FDhXEzELZtJXkEg65UJa_FGrRj4pBwhKAXrfR6oTjxXyn3abgGtn00oC8_mXHgti-ufIXraVoBiRQym1qQbAF9Ek-bmGn5AY_ZmCGTC77ICppU_ehFmyfK5khu9TYCro9BZfbBOwZFt1sUP_Q8e4PQciTIhbe_v_WrbMg1c0qRHjQAW-z2H89SVSA9QASLUnkVuhReHBVcpuWXHQUW7axBNN5v8GfV-zuLfCO6ouBHWXB3fivxYTxAoyLotSWMJXmv68Q"}
+
+
+{"alg":"RSA-OAEP-256","d":"YEM8118GOkiKRYvmTvi_IQa7rOvVd9w1UXOthvwVVK_JZnJBckcI40Y93jGH_6c2xahfO8wNQafRSFPzFVVS8T6lfJzW9SQYmcd4MwcYuj7zirdB67MDYSfRtwguvZ9vfTEXTyjKXPbzlfIHiEf9euEcgK6Hyy4GfNUNXd3Cypoq2sEc2wp9Eu1KnmQB1fz1AxDlN2RhdAQvw5RSFZmHCt6cSVLeumfdijnThvfV9IpwI4aq8iPgwgt3GKB1-awL3G1obPU-3yzhFL1bzYNROVjQAY9OEClLYuxQp0qc8Jj2dDjz5UJbL7aXXKXyN7cNoC1kLmbtHYk-PwAiVcUR","dp":"L1SAfP4fsUejhyEgepmd8ObDp29_D_AxsPtMFIRHBYzHZaJUC9upS931oH0gs0XKqbYH5EkFsqJCH13rBETuLULekYGO-bR4xIr-jCtq63QRS7maX6-KHtSoq3J7N5K_KFt3g57sE1y8zso3AEqXPx1cPyIn6ZV6vpccvgPLG_E","dq":"UNEh3-H5U475qA8iTckgsAecJmXgH144MSa08-vrrPzxSjXznlBOUxYe09429qGOfe43ciF549UMgiXQaw9hPQ_eBEcpwoX_vpajpzFCOYIponAvTTJZpZbiQJpHWpR49AKGOkcQdbOcoWonmQo2iyF1CbyxwQpkZiYxGzVax-M","e":"AQAB","ext":true,"key_ops":["decrypt","unwrapKey"],"kty":"RSA","n":"mYO--D8zDE91rNZXYnrhrFZFOSPlarvZWruDrBEz0NLI4tKEeOxpO993vMcJ9_H8jPmpzi0zfeRB2QU_gbeq4yuHB4ri5BvCPPajMLp93861RbsbX_1cnp2htG93nfFFmH_Aon-MmyRWDgAjAGbNPqSK-ZKUaSo0wIv6IDvFYy0z4bupNLPxB7OqRuS_mVubam3cNfQOx7OwPmmgginiDBRNrTIeiiG8E52wwQ4ita86Td3WNhEBBwinT0hoo7KwV1OlM3dG-_zAtE9fDz0uNJ7XRbGJ3ATRqqmbpMyf2anNt0oBNMekk0xAiHoAlqyM_tSRO2xZ-wO0Z6o4sNxL_w","p":"139f0U6WT09fMzKJ3a0hcgP-ZyOUSGh2rwYZ9otte4hJdc3gKva8lfOTsjiT-tneDpigG55uHqkvqFr11Ig097sPw6zGHShqlj663zQYKvN0_L5WvlXmJZybg_yPvakdVGJQcae1fDDOOogNj7Jyx8YmtZgL4DmPB5wJDg9QtFk","q":"tl4TGeePJwZHH-gdqP7nAOARDB7EaoAAIq8puYJatZokU3L73krpUJzYQVemaq2IT92isU2lsq_1WFDDennWPZ-LHuxDvuBQbceEyglopNW6EigD_xAF_ktu6JWihVOsDgcx2mid_4ZPSWxLlhDC9CT8uQOr0awUs4WKzAHZ2Bc","qi":"U26kW-9WD4PXItHFAjjK532J4QKgJWFd-8y1RKPaIhhSykaTO9xgosZ6ybtZ7ssy5PCGQpPgU2ly6iSBVy_SQITHkd05gGFqlUkgNZgKza_oSU3uths9duFlb_BwLJHSxdg3vZ3RpPWyvnlNCf5-0OQgLYsdwYuDjOllm5LlrNM"}
+
+
+ {"alg":"RSA-OAEP-256","e":"AQAB","ext":true,"key_ops":["encrypt","wrapKey"],"kty":"RSA","n":"mYO--D8zDE91rNZXYnrhrFZFOSPlarvZWruDrBEz0NLI4tKEeOxpO993vMcJ9_H8jPmpzi0zfeRB2QU_gbeq4yuHB4ri5BvCPPajMLp93861RbsbX_1cnp2htG93nfFFmH_Aon-MmyRWDgAjAGbNPqSK-ZKUaSo0wIv6IDvFYy0z4bupNLPxB7OqRuS_mVubam3cNfQOx7OwPmmgginiDBRNrTIeiiG8E52wwQ4ita86Td3WNhEBBwinT0hoo7KwV1OlM3dG-_zAtE9fDz0uNJ7XRbGJ3ATRqqmbpMyf2anNt0oBNMekk0xAiHoAlqyM_tSRO2xZ-wO0Z6o4sNxL_w"}
+
+            //RSA KEK
+            log.info("using public key ===> "+ req.getCryptoKey());
+            String publicKey="{\"keys\": [" + req.getCryptoKey() + "]}";
+            Path tempFile = Files.createTempFile(null, null);
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile.toFile()))) {
+                bw.write(publicKey);
+            }
+            JWKSet publicKeys = JWKSet.load(new File(String.valueOf(tempFile)));
+            RSAKey rsaKey = (RSAKey) publicKeys.getKeys().get(0);
+            RSAPublicKey rsaPublicKey = rsaKey.toRSAPublicKey();
+            byte[] bytes = rsaPublicKey.getEncoded();
+
+
+            db4cc8cb-4e24-452e-a6d4-cb00cec9bed8
+
+//            JWKSet publicKeys = JWKSet.load(new File("./FILES/pub.json"));
+//            RSAKey rsaKey = (RSAKey) publicKeys.getKeys().get(0);
+//            log.info("rsaKey is : " + rsaKey);
+//            RSAPublicKey rsaPublicKey = rsaKey.toRSAPublicKey();
+//            byte[] bytes = rsaPublicKey.getEncoded();
+//            log.info(" bytes is " + Arrays.toString(bytes));
+
+            //byte[] bytes = Files.readAllBytes(Paths.get("./FILES/ED1.pub"));
+            X509EncodedKeySpec ks = new X509EncodedKeySpec(bytes);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            PublicKey pub = kf.generatePublic(ks);
+
+
+
+<html>
+<head>
+	<title>Upload a video</title>
+	<link rel="stylesheet" href="style.css">
+	<script>
+		var __nspid="isrtzw";
+		var __nsptags=[];
+		(function(w, d) { var x = function() {
+		var j=d.createElement("script");j.type="text/javascript";j.async=true;
+		j.src="http"+("https:"===d.location.protocol?"s://cs":"://c")+".ns1p.net/p.js?a="+__nspid;
+		d.body.appendChild(j); }
+		if(w.addEventListener) { w.addEventListener("load", x, false); }
+		else if(w.attachEvent) { w.attachEvent("onload", x); }
+		else { w.onload = x; }
+		}(window, document));
+	</script>
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=G-N9E9YP1HGF"></script>
+	<script>
+  		window.dataLayer = window.dataLayer || [];
+  		function gtag(){dataLayer.push(arguments);}
+  		gtag('js', new Date());
+  		gtag('config', 'G-N9E9YP1HGF');
+	</script>
+</head>
+
+<body>
+	<p id="title">
+		Upload a video to api.video
+	</p>
+	<br>
+	<div id="action__upload">
+
+		<img id="uploadFile__icon" draggable="false" src = "upload.png">
+		<br/>
+		<label for="video-file" id="video-file-label">
+			Click here to upload a video
+		</label>
+		<input type="file" id="video-file" style='display:none'>
+
+	</div>
+	<br>
+	<br>
+	<div id="video-information" style="width: 50%"></div>
+	<div id="chunk-information" style="width: 50%"></div>
+	<div id="description">
+		Quickly upload *any* size video to <a href='https://api.video'>api.video</a> using a delegated token. Upon upload, you'll have a like that can be used for sharing.
+
+	</div>
+	<div id="footer">
+		This app was created with <a href="https://api.video">api.video</a>.<br/>
+		Get the <a href="https://github.com/dougsillars/blobUpload">sample code</a>, and read about <a href="https://a.video/works/upload-a-video">how we built the demo.</a><br/>
+		More sample apps can be found at <a href="https://a.video">a.video</a>.
+
+	</div>
+
+
+	<script>
+	  const input = document.querySelector('#video-file');
+	  const url ="https://ws.api.video/upload?token=to1YSecZMRjrvDGxSfVFTNhG";
+	  var chunkCounter =0;
+	  //break into 1 MB chunks for demo purposes
+	  const chunkSize = 1000000;
+	  var videoId = "";
+	  var playerUrl = "";
+
+
+	  input.addEventListener('change', () => {
+	    const file = input.files[0];
+		const filename = input.files[0].name;
+	    var numberofChunks = Math.ceil(file.size/chunkSize);
+		document.getElementById("video-information").innerHTML = "There will be " + numberofChunks + " chunks uploaded."
+		var start =0;
+		chunkCounter=0;
+		videoId="";
+		var chunkEnd = start + chunkSize;
+		//upload the first chunk to get the videoId
+		createChunk(videoId, start);
+
+
+
+		function createChunk(videoId, start, end){
+			chunkCounter++;
+			console.log("created chunk: ", chunkCounter);
+			chunkEnd = Math.min(start + chunkSize , file.size );
+			const chunk = file.slice(start, chunkEnd);
+			console.log("i created a chunk of video" + start + "-" + chunkEnd + "minus 1	");
+  		  	const chunkForm = new FormData();
+			if(videoId.length >0){
+				//we have a videoId
+				chunkForm.append('videoId', videoId);
+				console.log("added videoId");
+
+			}
+			//chunkForm.append('file', chunk);
+  		  	chunkForm.append('file', chunk, filename);
+			console.log("added file");
+
+
+			//created the chunk, now upload iit
+			uploadChunk(chunkForm, start, chunkEnd);
+		}
+
+		function uploadChunk(chunkForm, start, chunkEnd){
+			var oReq = new XMLHttpRequest();
+			oReq.upload.addEventListener("progress", updateProgress);
+			oReq.open("POST", url, true);
+			var blobEnd = chunkEnd-1;
+			var contentRange = "bytes "+ start+"-"+ blobEnd+"/"+file.size;
+			oReq.setRequestHeader("Content-Range",contentRange);
+			console.log("Content-Range", contentRange);
+  			function updateProgress (oEvent) {
+  			    if (oEvent.lengthComputable) {
+  			    var percentComplete = Math.round(oEvent.loaded / oEvent.total * 100);
+
+  				var totalPercentComplete = Math.round((chunkCounter -1)/numberofChunks*100 +percentComplete/numberofChunks);
+  			    document.getElementById("chunk-information").innerHTML = "Chunk # " + chunkCounter + " is " + percentComplete + "% uploaded. Total uploaded: " + totalPercentComplete +"%";
+  			//	console.log (percentComplete);
+  				// ...
+  			  } else {
+  				  console.log ("not computable");
+  			    // Unable to compute progress information since the total size is unknown
+  			  }
+  			}
+			oReq.onload = function (oEvent) {
+			               // Uploaded.
+							console.log("uploaded chunk" );
+							console.log("oReq.response", oReq.response);
+							var resp = JSON.parse(oReq.response)
+							videoId = resp.videoId;
+							//playerUrl = resp.assets.player;
+							console.log("videoId",videoId);
+
+							//now we have the video ID - loop through and add the remaining chunks
+							//we start one chunk in, as we have uploaded the first one.
+							//next chunk starts at + chunkSize from start
+							start += chunkSize;
+							//if start is smaller than file size - we have more to still upload
+							if(start<file.size){
+								//create the new chunk
+								createChunk(videoId, start);
+							}
+							else{
+								//the video is fully uploaded. there will now be a url in the response
+								playerUrl = resp.assets.player;
+								console.log("all uploaded! Watch here: ",playerUrl ) ;
+								document.getElementById("video-information").innerHTML = "all uploaded! Watch the video <a href=\'" + playerUrl +"\' target=\'_blank\'>here</a>" ;
+							}
+
+			  };
+			  oReq.send(chunkForm);
+
+
+
+		}
+
+
+	  });
+	</script>
+
+</body>
+
+</html>
+
+
